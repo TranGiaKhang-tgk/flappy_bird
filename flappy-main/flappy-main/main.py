@@ -9,11 +9,9 @@ class Pipe:
         self.pipe_surface = pipe_surface
         self.gap = pipe_gap
 
-        # rect của pipe
         self.bottom_rect = pipe_surface.get_rect(midtop=(x, y))
         self.top_rect = pipe_surface.get_rect(midbottom=(x, y - pipe_gap))
 
-        # chỉ màn 2: ~50% ống di chuyển nhẹ
         if level == 2 and random.random() < 0.5:
             self.speed = random.choice([1, -1])
             self.is_moving = True
@@ -56,7 +54,7 @@ class Obstacle:
     def off_screen(self):
         return self.rect.right < -50
 
-# -------------------- HÀM HỖ TRỢ CHUNG --------------------
+# -------------------- HÀM CHUNG --------------------
 def create_pipe(level):
     random_pipe_pos = random.choice(pipe_height)
     return Pipe(500, random_pipe_pos, level, pipe_gap, pipe_surface)
@@ -92,34 +90,25 @@ def bird_animation():
     new_bird_rect = new_bird.get_rect(center=(100, bird_rect.centery))
     return new_bird, new_bird_rect
 
-# -------------------- OBSTACLE (LEVEL 3) - ÍT --------------------
-# -------------------- OBSTACLE (LEVEL 3) - ÍT HƠN --------------------
+# -------------------- OBSTACLE (LEVEL 3) --------------------
 def spawn_obstacle():
-    # Độ khó tăng theo điểm
     if score < 6:
         max_obs = 1
-        chance = 8     # 0.8%
+        chance = 8
     elif score < 13:
         max_obs = 3
-        chance = 15    # 1.5%
+        chance = 15
     elif score < 20:
         max_obs = 5
-        chance = 30    # 3%
+        chance = 30
     else:
-        max_obs = random.randint(7, 10)   # nhiều cực mạnh
-        chance = random.randint(50, 70)   # 5% → 7% spawn liên tục
+        max_obs = random.randint(7, 10)
+        chance = random.randint(50, 70)
 
-    # Khi chưa chạm số lượng tối đa mới được tạo thêm quái
     if len(obstacle_list) < max_obs and random.randint(0, 1000) < chance:
-        # tạo quái lệch vị trí để không đứng thành hàng chặn hết
         base = random.randint(250, 490)
-        y_pos = base + random.randint(-40, 40)   # cho dao động tự nhiên
-
+        y_pos = base + random.randint(-40, 40)
         obstacle_list.append(Obstacle(520, y_pos, obstacle_surface))
-
-
-
-
 
 def move_obstacle():
     for obs in obstacle_list:
@@ -137,7 +126,7 @@ def check_obstacle_collision():
             return False
     return True
 
-# -------------------- HIỂN THỊ ĐIỂM / TOP --------------------
+# -------------------- HIỂN THỊ ĐIỂM --------------------
 def score_display(game_state):
     score_surface = game_font.render(f'{player_name}: {int(score)}', True, (255, 255, 255))
     score_rect = score_surface.get_rect(center=(216, 100))
@@ -157,12 +146,21 @@ def score_display(game_state):
     ai_score_rect = ai_score_surface.get_rect(center=(350, 100))
     screen.blit(ai_score_surface, ai_score_rect)
 
-# -------------------- INIT PYGAME --------------------
-pygame.mixer.pre_init(44100, -16, 2, 512)
-pygame.init()
+
+# -------------------- INIT PYGAME (REPLIT FIX) --------------------
+try:
+    pygame.mixer.pre_init(44100, -16, 2, 512)
+    pygame.init()
+
+    if not pygame.mixer.get_init():
+        pygame.mixer.init()
+except:
+    pygame.mixer.init()
+
 screen = pygame.display.set_mode((432, 768))
 clock = pygame.time.Clock()
 game_font = pygame.font.Font('04B_19.ttf', 35)
+
 
 # -------------------- NHẬP TÊN NGƯỜI CHƠI --------------------
 player_name = ""
@@ -206,6 +204,7 @@ while input_active:
 player_data = load_or_create_player(player_name)
 high_score = player_data.get("best_score", 0)
 
+
 # -------------------- INIT AI --------------------
 ai_player = AIPlayer(x_pos=250, y_pos=384, pipe_gap=180)
 ai_passed_pipes = []
@@ -222,6 +221,7 @@ pipe_list = []
 pipe_height = [250, 300, 350, 400]
 pipe_gap = 180
 
+
 # -------------------- LOAD ASSETS --------------------
 bg = pygame.transform.scale2x(pygame.image.load('assets/background-night.png').convert())
 floor = pygame.transform.scale2x(pygame.image.load('assets/floor.png').convert())
@@ -234,7 +234,6 @@ bird_index = 0
 bird = bird_list[bird_index]
 bird_rect = bird.get_rect(center=(100, 384))
 
-# AI bird
 ai_bird_list = [bird_down.copy(), bird_mid.copy(), bird_up.copy()]
 for img in ai_bird_list:
     overlay = pygame.Surface(img.get_size(), pygame.SRCALPHA)
@@ -244,17 +243,17 @@ ai_bird = ai_bird_list[0]
 ai_bird_index = 0
 
 pipe_surface = pygame.transform.scale2x(pygame.image.load('assets/pipe-green.png').convert())
-game_over_surface = pygame.transform.scale2x(pygame.image.load('assets/message.png').convert_alpha())
+game_over_surface = pygame.transform.scale2x(pygame.image.load('assets/message.png').convert())
 game_over_rect = game_over_surface.get_rect(center=(216, 384))
 
 flap_sound = pygame.mixer.Sound('sound/sfx_wing.wav')
 hit_sound = pygame.mixer.Sound('sound/sfx_hit.wav')
 score_sound = pygame.mixer.Sound('sound/sfx_point.wav')
 
-# Obstacle image
 enemy_img = pygame.image.load('assets/enemy.png').convert_alpha()
 obstacle_surface = pygame.transform.scale(enemy_img, (45, 45))
 obstacle_list = []
+
 
 # -------------------- TIMERS --------------------
 SPAWNPIPE = pygame.USEREVENT
@@ -263,6 +262,7 @@ BIRDFLAP = pygame.USEREVENT + 1
 pygame.time.set_timer(BIRDFLAP, 200)
 
 floor_x_pos = 0
+
 
 # -------------------- GAME LOOP --------------------
 while True:
@@ -285,8 +285,10 @@ while True:
                 ai_player.reset(250, 384)
                 obstacle_list.clear()
                 current_level = 1
+
         if event.type == SPAWNPIPE:
             pipe_list.append(create_pipe(current_level))
+
         if event.type == BIRDFLAP:
             bird_index = (bird_index + 1) % 3
             bird, bird_rect = bird_animation()
@@ -311,21 +313,21 @@ while True:
                 passed_pipes.append(pipe)
                 score_sound.play()
 
-        # AI logic
         if ai_player.alive:
             current_time = pygame.time.get_ticks()
             if ai_player.should_jump(pipe_list, current_time):
                 ai_player.jump()
             ai_player.update_movement(gravity)
             ai_player.check_collision(pipe_list)
+
             for pipe in pipe_list:
                 if pipe.bottom_rect.centerx < ai_player.bird_rect.centerx and pipe not in ai_passed_pipes:
                     ai_player.increment_score()
                     ai_passed_pipes.append(pipe)
+
             rotated_ai = rotate_bird(ai_bird, ai_player.bird_movement)
             screen.blit(rotated_ai, ai_player.bird_rect)
 
-        # LEVEL 3: obstacles ít
         if current_level == 3:
             spawn_obstacle()
             obstacle_list = move_obstacle()
